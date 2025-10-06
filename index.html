@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>💖 2 đứa mình 💖</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(circle at center, #250016 0%, #000 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      transform-origin: center;
+      animation: heartbeat 1.5s infinite ease-in-out;
+    }
+
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.08); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .album-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90vw;
+      height: 90vw;
+      max-width: 700px;
+      max-height: 700px;
+      perspective: 1800px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .album {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.2s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+    }
+
+    .album:active {
+      cursor: grabbing;
+    }
+
+    .album img {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 20px;
+      border: 2px solid rgba(255,255,255,0.6);
+      box-shadow: 0 0 30px rgba(255,120,150,0.4);
+      opacity: 0.85;
+      transition: transform 0.6s, opacity 0.6s;
+      backface-visibility: hidden;
+    }
+
+    .album img.front {
+      opacity: 1;
+      transform: scale(1.3);
+      box-shadow: 0 0 60px rgba(255,150,200,0.9);
+    }
+  </style>
+</head>
+<body>
+  <!-- Trái tim -->
+  <canvas id="pinkboard"></canvas>
+
+  <!-- Album -->
+  <div class="album-wrapper">
+    <div class="album">
+      <img src="anh1.jpg" alt="">
+      <img src="anh2.jpg" alt="">
+      <img src="anh3.jpg" alt="">
+      <img src="anh4.jpg" alt="">
+      <img src="anh5.jpg" alt="">
+      <img src="anh6.jpg" alt="">
+      <img src="anh7.jpg" alt="">
+      <img src="anh8.jpg" alt="">
+      <img src="anh9.jpg" alt="">
+      <img src="anh10.jpg" alt="">
+      <img src="anh11.jpg" alt="">
+      <img src="anh12.jpg" alt="">
+      <img src="anh13.jpg" alt="">
+      <img src="anh14.jpg" alt="">
+      <img src="anh15.jpg" alt="">
+      <img src="anh16.jpg" alt="">
+      <img src="anh17.jpg" alt="">
+      <img src="anh18.jpg" alt="">
+    </div>
+  </div>
+
+  <!-- Nhạc -->
+  <audio id="music" src="music.mp3" preload="auto" loop></audio>
+
+  <!-- Trái tim bay -->
+  <script>
+  var settings = { particles: { length: 7000, duration: 4, velocity: 80, effect: -1.3, size: 8 } };
+  var Point = function(x, y) { this.x = x || 0; this.y = y || 0; };
+  Point.prototype.clone = function() { return new Point(this.x, this.y); };
+  Point.prototype.length = function(length) {
+    if (length === undefined) return Math.sqrt(this.x * this.x + this.y * this.y);
+    this.normalize(); this.x *= length; this.y *= length; return this;
+  };
+  Point.prototype.normalize = function() { var l = this.length(); this.x /= l; this.y /= l; return this; };
+  var Particle = function() { this.position = new Point(); this.velocity = new Point(); this.acceleration = new Point(); this.age = 0; };
+  Particle.prototype.initialize = function(x, y, dx, dy) {
+    this.position.x = x; this.position.y = y;
+    this.velocity.x = dx; this.velocity.y = dy;
+    this.acceleration.x = dx * settings.particles.effect;
+    this.acceleration.y = dy * settings.particles.effect;
+    this.age = 0;
+  };
+  Particle.prototype.update = function(dt) {
+    this.position.x += this.velocity.x * dt;
+    this.position.y += this.velocity.y * dt;
+    this.velocity.x += this.acceleration.x * dt;
+    this.velocity.y += this.acceleration.y * dt;
+    this.age += dt;
+  };
+  Particle.prototype.draw = function(ctx, img) {
+    function ease(t) { return (--t) * t * t + 1; }
+    var size = img.width * ease(this.age / settings.particles.duration);
+    ctx.globalAlpha = 1 - this.age / settings.particles.duration;
+    ctx.drawImage(img, this.position.x - size / 2, this.position.y - size / 2, size, size);
+  };
+
+  var ParticlePool = function(length) {
+    this.particles = new Array(length);
+    for (var i = 0; i < length; i++) this.particles[i] = new Particle();
+    this.firstActive = 0; this.firstFree = 0;
+    this.duration = settings.particles.duration;
+  };
+  ParticlePool.prototype.add = function(x, y, dx, dy) {
+    var p = this.particles[this.firstFree];
+    p.initialize(x, y, dx, dy);
+    this.firstFree++; if (this.firstFree === this.particles.length) this.firstFree = 0;
+    if (this.firstActive === this.firstFree) { this.firstActive++; if (this.firstActive === this.particles.length) this.firstActive = 0; }
+  };
+  ParticlePool.prototype.update = function(dt) {
+    var i;
+    if (this.firstActive < this.firstFree)
+      for (i = this.firstActive; i < this.firstFree; i++) this.particles[i].update(dt);
+    if (this.firstFree < this.firstActive) {
+      for (i = this.firstActive; i < this.particles.length; i++) this.particles[i].update(dt);
+      for (i = 0; i < this.firstFree; i++) this.particles[i].update(dt);
+    }
+    while (this.particles[this.firstActive].age >= this.duration && this.firstActive !== this.firstFree) {
+      this.firstActive++; if (this.firstActive === this.particles.length) this.firstActive = 0;
+    }
+  };
+  ParticlePool.prototype.draw = function(ctx, img) {
+    if (this.firstActive < this.firstFree)
+      for (var i = this.firstActive; i < this.firstFree; i++) this.particles[i].draw(ctx, img);
+    if (this.firstFree < this.firstActive) {
+      for (var i = this.firstActive; i < this.particles.length; i++) this.particles[i].draw(ctx, img);
+      for (var i = 0; i < this.firstFree; i++) this.particles[i].draw(ctx, img);
+    }
+  };
+
+  (function(canvas) {
+    var ctx = canvas.getContext('2d'),
+        particles = new ParticlePool(settings.particles.length),
+        particleRate = settings.particles.length / settings.particles.duration,
+        time;
+    function pointOnHeart(t) {
+      return new Point(160 * Math.pow(Math.sin(t), 3),
+        130 * Math.cos(t) - 50 * Math.cos(2*t) - 20 * Math.cos(3*t) - 10 * Math.cos(4*t) + 25);
+    }
+    var image = (function() {
+      var c = document.createElement('canvas'), ctx = c.getContext('2d');
+      c.width = settings.particles.size; c.height = settings.particles.size;
+      function to(t) {
+        var p = pointOnHeart(t);
+        p.x = settings.particles.size / 2 + p.x * settings.particles.size / 350;
+        p.y = settings.particles.size / 2 - p.y * settings.particles.size / 350;
+        return p;
+      }
+      ctx.beginPath();
+      var t = -Math.PI, p = to(t);
+      ctx.moveTo(p.x, p.y);
+      while (t < Math.PI) { t += 0.01; p = to(t); ctx.lineTo(p.x, p.y); }
+      ctx.closePath();
+      ctx.fillStyle = '#ff1744';
+      ctx.fill();
+      var img = new Image(); img.src = c.toDataURL();
+      return img;
+    })();
+
+    function render() {
+      requestAnimationFrame(render);
+      var newTime = new Date().getTime() / 1000,
+          dt = newTime - (time || newTime);
+      time = newTime;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var amount = particleRate * dt;
+      for (var i = 0; i < amount; i++) {
+        var pos = pointOnHeart(Math.PI - 2*Math.PI*Math.random());
+        var dir = pos.clone().length(settings.particles.velocity);
+        particles.add(canvas.width/2 + pos.x, canvas.height/2 - pos.y, dir.x, -dir.y);
+      }
+      particles.update(dt);
+      particles.draw(ctx, image);
+    }
+    function onResize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+    window.onresize = onResize;
+    setTimeout(function(){ onResize(); render(); }, 10);
+  })(document.getElementById('pinkboard'));
+  </script>
+
+  <!-- Xoay album + phát nhạc -->
+  <script>
+  const album = document.querySelector('.album');
+  const imgs = document.querySelectorAll('.album img');
+  const music = document.getElementById('music');
+  let angle = 0;
+  const total = imgs.length;
+  const deg = 360 / total;
+  const radius = 600;
+
+  imgs.forEach((img, i) => {
+    const rotateY = deg * i;
+    img.style.transform = `rotateY(${rotateY}deg) translateZ(${radius}px)`;
+  });
+
+  function updateFront() {
+    let closest = Math.round((-angle / deg) % total);
+    imgs.forEach((img, i) => {
+      img.classList.remove('front');
+      if ((i + total) % total === (closest + total) % total) img.classList.add('front');
+    });
+  }
+
+  // phát nhạc tự động khi tải trang
+  window.addEventListener('load', () => {
+    music.volume = 0.6;
+    music.play().catch(() => {
+      document.addEventListener('click', () => music.play(), { once: true });
+    });
+  });
+
+  // Xoay mượt bằng chuột và cảm ứng
+  let startX = 0, dragging = false, velocity = 0, lastX = 0, lastMoveTime = 0;
+
+  const startDrag = x => { dragging = true; startX = lastX = x; lastMoveTime = Date.now(); };
+  const moveDrag = x => {
+    if (!dragging) return;
+    const now = Date.now();
+    const deltaX = x - lastX;
+    const dt = now - lastMoveTime;
+    velocity = deltaX / dt;
+    angle += deltaX * 0.4;
+    album.style.transform = `rotateY(${angle}deg)`;
+    updateFront();
+    lastX = x;
+    lastMoveTime = now;
+  };
+  const endDrag = () => {
+    dragging = false;
+    const momentum = setInterval(() => {
+      angle += velocity * 20;
+      velocity *= 0.95;
+      album.style.transform = `rotateY(${angle}deg)`;
+      updateFront();
+      if (Math.abs(velocity) < 0.001) clearInterval(momentum);
+    }, 16);
+  };
+
+  // Chuột
+  album.addEventListener('mousedown', e => startDrag(e.clientX));
+  window.addEventListener('mousemove', e => moveDrag(e.clientX));
+  window.addEventListener('mouseup', endDrag);
+
+  // Cảm ứng
+  album.addEventListener('touchstart', e => startDrag(e.touches[0].clientX));
+  album.addEventListener('touchmove', e => moveDrag(e.touches[0].clientX));
+  album.addEventListener('touchend', endDrag);
+  </script>
+</body>
+</html>
